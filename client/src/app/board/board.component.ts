@@ -1,15 +1,18 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewChildren, QueryList, Input, AfterViewInit } from '@angular/core';
 import { ISignalSource } from '../../../../src/interfaces/Board';
-import { AnimationBuilder, style, animate, AnimationPlayer } from '@angular/animations';
-import * as moment from 'moment';
+import { AnimationPlayer } from '@angular/animations';
+import { MetronomeLineDirective } from './MetronomeLineDirective';
 
 @Component({
   selector: 'app-board',
   templateUrl: './board.component.html',
   styleUrls: ['./board.component.scss']
 })
-export class BoardComponent implements OnInit {
-  @ViewChild('counter', { static: true }) counter: ElementRef;
+export class BoardComponent implements OnInit, AfterViewInit {
+  @ViewChildren(MetronomeLineDirective) ageables: QueryList<MetronomeLineDirective>;
+  isPlaying = false;
+  visibleTimelineMs = 5000;
+  metronomeLines: any[] = [];
   deadlineTop = 85;
   socket: WebSocket;
   lanes: ISignalSource[] = [
@@ -17,37 +20,50 @@ export class BoardComponent implements OnInit {
     { color: 'cyan' }
   ];
   boardWaterfallAnimationPlayers: AnimationPlayer[] = [];
-  private factory = this.builder.build([
-    style({ top: 0 }),
-    animate(5000 / (85 / 100), style({ top: '100%' }))
-  ]);
-  constructor(private builder: AnimationBuilder) {
+
+  constructor() {
   }
 
-  animateIndefinately(el: ElementRef) {
-    const animation = this.factory.create(el.nativeElement, {});
-    this.boardWaterfallAnimationPlayers.push(animation);
-    animation.onDone(() => {
-      this.boardWaterfallAnimationPlayers.splice(this.boardWaterfallAnimationPlayers.indexOf(animation), 1);
-      animation.destroy();
-      this.animateIndefinately(el);
-    });
-    animation.play();
+  togglePlayState() {
+    this.isPlaying = !this.isPlaying;
+  }
+
+  play() {
+    for (const metronomeLine of this.ageables.toArray()) {
+      metronomeLine.animationPlayer.play();
+    }
+  }
+
+  pause() {
+    for (const metronomeLine of this.ageables.toArray()) {
+      metronomeLine.animationPlayer.pause();
+    }
+  }
+
+  async createMetronomeLineGrid() {
+    this.metronomeLines.push(1e3);
+    this.metronomeLines.push(2e3);
+    this.metronomeLines.push(3e3);
+    this.metronomeLines.push(4e3);
+    this.metronomeLines.push(5e3);
+  }
+
+  ngAfterViewInit() {
+    this.createMetronomeLineGrid();
   }
 
   ngOnInit() {
     this.socket = new WebSocket('ws://localhost:8000');
 
-    this.animateIndefinately(this.counter);
-
     this.socket.onopen = () => {
       console.log('connected');
-      this.socket.onmessage = async (event) => {
-        const receivedAt = moment();
+      this.socket.onmessage = (event) => {
         const snareAudioFile = 'CYCdh_K1close_Snr-01.wav';
-        const data = await event.data.arrayBuffer();
-        console.log(moment().diff(receivedAt), data);
-        (new Audio('/assets/audio/kits/Kit 1 - Acoustic close/CYCdh_K1close_Snr-01.wav')).play();
+        const data = JSON.parse(event.data);
+        console.log(data);
+        if (data.channel === 9 && data.note === 38 && data._type === 'noteon') {
+          (new Audio('/assets/audio/kits/Kit 1 - Acoustic close/CYCdh_K1close_Snr-01.wav')).play();
+        }
       };
     };
   }

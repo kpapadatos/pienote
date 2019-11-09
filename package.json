@@ -8,6 +8,7 @@
         "ng-serve": "cd client && ng serve -o"
     },
     "dependencies": {
+        "audio-context": "^1.0.3",
         "audio-loader": "^1.0.3",
         "audio-play": "^2.2.1",
         "easymidi": "^1.0.2",

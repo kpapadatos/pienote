@@ -2,28 +2,24 @@ import moment = require('moment');
 
 const play = require('audio-play');
 const load = require('audio-loader');
+const context = require('audio-context')()
 
 export default class Metronome {
     private static clickSoundFile = './audio/metronome/click.wav';
     private static countSoundFile = './audio/metronome/count.wav';
     private clickAudioPCM: Buffer;
-    private clickPlayOptions: any;
     private countAudioPCM: Buffer;
-    private countPlayOptions: any;
     private isPlaying = false;
     private ready: Promise<any>;
     private get beatIntervalMs() {
         return 60e3 / this.bpm;
     }
-    private get intervalMs() {
-        return this.beatIntervalMs * (this.timeSignature[1] / this.countNote);
-    }
     private intervalRef: NodeJS.Timeout;
 
     constructor(
-        public timeSignature = [2, 8],
+        public timeSignature = [4, 4],
         public countNote = 4,
-        public bpm = 80) {
+        public bpm = 120) {
         this.loadAudioFiles();
     }
 
@@ -45,38 +41,43 @@ export default class Metronome {
 
     private startInterval() {
         const note = Math.max(this.countNote, this.timeSignature[1]);
-        const measureSize = (this.timeSignature[0] * this.timeSignature[1]) * (this.timeSignature[0] / note);
+        const measureSize = this.timeSignature[0] * (note / this.timeSignature[1]);
         let noteCount = 1;
         this.intervalRef = setInterval(() => {
-            if (this.countNote >= this.timeSignature[1]) {
-                this.click();
-            } else { }
-
-            if (noteCount % measureSize === 1) {
-                // this.count();
+            if (noteCount % measureSize === 0) {
+                this.count();
             }
+
+            if (noteCount % (this.countNote / note) === 0) {
+                this.click();
+            }
+
             noteCount++;
-        }, this.intervalMs);
+        }, this.beatIntervalMs / (note / this.timeSignature[1]));
     }
 
     private loadAudioFiles() {
         this.ready = Promise.all([
-            load(Metronome.clickSoundFile).then((audioBuffer: Buffer, playOptions: any) => {
+            load(Metronome.clickSoundFile).then((audioBuffer: Buffer) => {
                 this.clickAudioPCM = audioBuffer;
-                this.clickPlayOptions = playOptions;
             }),
-            load(Metronome.countSoundFile).then((audioBuffer: Buffer, playOptions: any) => {
+            load(Metronome.countSoundFile).then((audioBuffer: Buffer) => {
                 this.countAudioPCM = audioBuffer;
-                this.countPlayOptions = playOptions;
             })
         ]);
     }
 
     private click() {
-        play(this.clickAudioPCM, this.clickPlayOptions);
+        play(this.clickAudioPCM, {
+            context,
+            start: .01
+        });
     }
 
     private count() {
-        play(this.countAudioPCM, this.countPlayOptions);
+        play(this.countAudioPCM, {
+            context,
+            start: .04
+        });
     }
 }

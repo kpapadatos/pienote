@@ -1,6 +1,9 @@
 <div class="board-container">
+    <button class="play-btn" (click)="togglePlayState()">{{isPlaying ? 'Pause' : 'Play'}}</button>
     <div class="deadline" [ngStyle]="{ top: deadlineTop + '%' }"></div>
-    <div #counter class="counter"></div>
+    <div appMetronomeLine [timeToDeadlineMs]="line" [isPlaying]="isPlaying" [deadlineTop]="deadlineTop"
+        [visibleTimelineMs]="visibleTimelineMs" *ngFor="let line of metronomeLines" class="metronome-line">
+    </div>
     <div class="lane-container">
         <div class="lane" *ngFor="let lane of lanes"></div>
     </div>
