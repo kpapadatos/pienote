@@ -27,7 +27,20 @@ export default class Application {
             this.socket = socket;
         });
 
-        // this.metronome.start();
+        this.app.use((req, res, next) => {
+            res.setHeader('access-control-allow-origin', '*');
+            next();
+        });
+
+        this.app.get('/api/metronome/:mode', (req, res) => {
+            if (req.params.mode === 'on') {
+                this.metronome.start();
+            } else {
+                this.metronome.stop();
+            }
+
+            res.end(this.metronome.intervalMs.toString());
+        });
 
         this.midiInput.on('message', (message: NoteOnMessage) => {
             if (message._type) {

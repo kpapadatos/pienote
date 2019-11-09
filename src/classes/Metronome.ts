@@ -7,6 +7,7 @@ const context = require('audio-context')()
 export default class Metronome {
     private static clickSoundFile = './audio/metronome/click.wav';
     private static countSoundFile = './audio/metronome/count.wav';
+    public intervalMs: number;
     private clickAudioPCM: Buffer;
     private countAudioPCM: Buffer;
     private isPlaying = false;
@@ -19,7 +20,7 @@ export default class Metronome {
     constructor(
         public timeSignature = [4, 4],
         public countNote = 4,
-        public bpm = 120) {
+        public bpm = 100) {
         this.loadAudioFiles();
     }
 
@@ -28,13 +29,13 @@ export default class Metronome {
             return;
         }
 
-        await this.ready;
         this.isPlaying = true;
 
         this.startInterval();
     }
 
     public stop() {
+        this.isPlaying = false;
         clearInterval(this.intervalRef);
         this.intervalRef.unref();
     }
@@ -42,18 +43,19 @@ export default class Metronome {
     private startInterval() {
         const note = Math.max(this.countNote, this.timeSignature[1]);
         const measureSize = this.timeSignature[0] * (note / this.timeSignature[1]);
+        this.intervalMs = this.beatIntervalMs / (note / this.timeSignature[1]);
         let noteCount = 1;
         this.intervalRef = setInterval(() => {
-            if (noteCount % measureSize === 0) {
-                this.count();
+            const currentNoteCount = noteCount++;
+
+            if (currentNoteCount % measureSize === 0) {
+                return this.count();
             }
 
-            if (noteCount % (this.countNote / note) === 0) {
+            if (currentNoteCount % (this.countNote / note) === 0) {
                 this.click();
             }
-
-            noteCount++;
-        }, this.beatIntervalMs / (note / this.timeSignature[1]));
+        }, this.intervalMs);
     }
 
     private loadAudioFiles() {
@@ -77,7 +79,7 @@ export default class Metronome {
     private count() {
         play(this.countAudioPCM, {
             context,
-            start: .04
+            start: .05
         });
     }
 }
