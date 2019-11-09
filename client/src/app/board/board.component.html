@@ -1,0 +1,7 @@
+<div class="board-container">
+    <div class="deadline" [ngStyle]="{ top: deadlineTop + '%' }"></div>
+    <div #counter class="counter"></div>
+    <div class="lane-container">
+        <div class="lane" *ngFor="let lane of lanes"></div>
+    </div>
+</div>

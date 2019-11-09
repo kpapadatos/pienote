@@ -8,6 +8,10 @@
         "quotemark": [
             true,
             "single"
+        ],
+        "trailing-comma": [
+            true,
+            "never"
         ]
     },
     "rulesDirectory": []

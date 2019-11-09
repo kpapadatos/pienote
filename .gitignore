@@ -3,3 +3,4 @@ dist
 coverage
 *.log
 *.xml
+client/src/assets/audio/kits
