@@ -15,7 +15,7 @@
         "express": "^4.17.1",
         "moment": "^2.24.0",
         "request-promise-native": "^1.0.8",
-        "ws": "^7.2.0"
+        "ws": "^7.4.6"
     },
     "devDependencies": {
         "@angular/cli": "^8.3.18",
