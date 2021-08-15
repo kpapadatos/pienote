@@ -28,6 +28,7 @@ export class TrackComponent implements OnInit, OnDestroy {
   private isDead = false;
   private frameResuestId?: number;
   private frameStack = [] as Array<{ startPositionMs: number; element: HTMLDivElement; }>;
+  private lastPositionMs?: number;
   constructor(private elementRef: ElementRef) {
     Object.assign(window, { track: this });
     this.initMIDI();
@@ -36,7 +37,7 @@ export class TrackComponent implements OnInit, OnDestroy {
     const access = await (navigator as any).requestMIDIAccess();
     const inputs = [...access.inputs.values()];
     console.log(inputs);
-    inputs[0].addEventListener('midimessage', (message: any) => {
+    inputs[0]?.addEventListener('midimessage', (message: any) => {
       if (message.data[0] === 254) {
         return;
       }
@@ -108,7 +109,17 @@ export class TrackComponent implements OnInit, OnDestroy {
     this.frameResuestId = requestAnimationFrame(async (time) => {
       const { duration: durationMs, position: positionMs } = await this.player.getCurrentState();
 
-      this.removeOldestFrameIfNeeded(positionMs);
+      // On pause, it does like +150ms and on resume -150ms, which causes visible hops
+      if (this.lastPositionMs !== undefined) {
+        const deltaMs = positionMs - this.lastPositionMs;
+        if (deltaMs < 0 && !this.isDead) {
+          return this.loop();
+        }
+      }
+
+      this.lastPositionMs = positionMs;
+
+      this.removeOldestFramesIfNeeded(positionMs);
       this.updateFramePositions(positionMs);
       this.pushNextFrameIfNeeded(positionMs);
 
@@ -134,12 +145,13 @@ export class TrackComponent implements OnInit, OnDestroy {
     const pxpms = viewportHeightPx / TrackComponent.VIEWPORT_TIME_MS;
     return ms * pxpms;
   }
-  removeOldestFrameIfNeeded(currentPositionMs: number) {
+  removeOldestFramesIfNeeded(currentPositionMs: number) {
     const firstFrame = this.frameStack[0];
 
     if (firstFrame?.startPositionMs < currentPositionMs - TrackComponent.frameDurationMs * TrackComponent.FRAME_SIZE) {
       this.frameStack.shift();
       firstFrame.element.remove();
+      this.removeOldestFramesIfNeeded(currentPositionMs);
     }
   }
   pushNextFrameIfNeeded(currentPositionMs: number) {
