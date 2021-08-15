@@ -1,0 +1,16 @@
+<ng-container *ngIf="player$ | async as player">
+  <div class="flex flex-row items-center p-3">
+    <fa-icon
+      [icon]="(player.isPlaying$ | async) ? faPause : faPlay"
+      class="cursor-pointer"
+      (click)="player.togglePlay()"
+    ></fa-icon>
+    <div #delay class="ml-auto"></div>
+  </div>
+  <app-track
+    *ngIf="analysis$ | async as analysis"
+    [player]="player"
+    [analysis]="analysis"
+    (delayMs)="delay.innerHTML = $event.toFixed(0).toString()"
+  ></app-track>
+</ng-container>

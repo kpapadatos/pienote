@@ -1,0 +1,9 @@
+<div *ngIf="tracks$ | async as tracks" class="flex flex-col">
+  <div
+    *ngFor="let track of tracks"
+    [routerLink]="[track.track.id]"
+    class="ml-2 text-gray-300 hover:text-white"
+  >
+    {{ track.track.name }}
+  </div>
+</div>

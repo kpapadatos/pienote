@@ -1,0 +1,10 @@
+:host {
+  @apply rounded flex flex-1 relative overflow-hidden;
+  perspective: 1000px;
+  #track {
+    @apply h-full rounded flex m-auto relative overflow-hidden;
+    border: 1px solid black;
+    width: 80%;
+    transform: rotateX(30deg);
+  }
+}

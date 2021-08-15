@@ -1,9 +1,9 @@
-import { getInputs, Input } from 'easymidi';
+// import { getInputs, Input } from 'easymidi';
 import * as express from 'express';
 import { createReadStream, readFileSync } from 'fs';
 import { createServer } from 'http';
 import * as WebSocket from 'ws';
-import { NoteOnMessage } from '../interfaces/EasyMIDI';
+// import { NoteOnMessage } from '../interfaces/EasyMIDI';
 import Metronome from './Metronome';
 
 export default class Application {
@@ -15,8 +15,8 @@ export default class Application {
     private server = createServer(this.app);
     private wsServer: WebSocket.Server;
     private socket: WebSocket;
-    private midiInputDevices = getInputs();
-    private midiInput = new Input(this.midiInputDevices[0]);
+    // private midiInputDevices = getInputs();
+    // private midiInput = new Input(this.midiInputDevices[0]);
     private metronome = new Metronome();
 
     constructor() {
@@ -42,14 +42,14 @@ export default class Application {
             res.end(this.metronome.intervalMs.toString());
         });
 
-        this.midiInput.on('message', (message: NoteOnMessage) => {
-            if (message._type) {
-                console.log(message);
-            }
+        // this.midiInput.on('message', (message: NoteOnMessage) => {
+        //     if (message._type) {
+        //         console.log(message);
+        //     }
 
-            if (message._type === 'noteon') {
-                this.socket.send(message);
-            }
-        });
+        //     if (message._type === 'noteon') {
+        //         this.socket.send(message);
+        //     }
+        // });
     }
 }
