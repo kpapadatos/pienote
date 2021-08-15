@@ -9,6 +9,7 @@ import { SidenavComponent } from './sidenav/sidenav.component';
 import { TracklistComponent } from './sidenav/tracklist/tracklist.component';
 import { GameComponent } from './game/game.component';
 import { TrackComponent } from './track/track.component';
+import { SeekBarComponent } from './seek-bar/seek-bar.component';
 
 
 @NgModule({
@@ -19,7 +20,8 @@ import { TrackComponent } from './track/track.component';
     SidenavComponent,
     TracklistComponent,
     GameComponent,
-    TrackComponent
+    TrackComponent,
+    SeekBarComponent
   ],
   imports: [
     BrowserModule,

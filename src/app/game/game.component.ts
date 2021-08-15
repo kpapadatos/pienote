@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faPause, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { parseArrayBuffer } from 'midi-json-parser';
 import { BehaviorSubject } from 'rxjs';
 import { createSpotifyPlayer, SpotifyPlayer } from 'src/common/classes/SpotifyPlayer';
 import { ISpotifyTrackAnalysis, SpotifyService } from 'src/services/spotify.service';
@@ -16,6 +17,7 @@ export class GameComponent implements OnInit, OnDestroy {
   player$ = new BehaviorSubject<SpotifyPlayer | undefined>(undefined);
   faPlay = faPlay;
   faPause = faPause;
+  trackId?: string;
   constructor(private route: ActivatedRoute, private spotify: SpotifyService) { }
   ngOnDestroy(): void {
     this.player$.getValue()?.dispose();
@@ -26,15 +28,37 @@ export class GameComponent implements OnInit, OnDestroy {
       this.player$.next(undefined);
       this.analysis$.next(undefined);
 
+      this.trackId = params.trackId;
       this.loadPlayer(params.trackId);
       this.loadAnalysis(params.trackId);
+      this.tryGetMIDIFile(params.trackId);
     });
+  }
+  seek(pc: number) {
+    const player = this.player$.getValue();
+    const state = player?.state$.getValue();
+    if (player?.trackId && state?.duration) {
+      console.log(pc, state?.duration);
+      player.seek(pc * state?.duration);
+    }
+  }
+  async togglePlay() {
+    const player = this.player$.getValue() as SpotifyPlayer;
+    const trackId = this.trackId as string;
+    if (!player.trackId) {
+      player.trackId = trackId;
+      await this.spotify.setTrack(trackId, player.deviceId);
+    } else {
+      await player.togglePlay();
+    }
+  }
+  private async tryGetMIDIFile(trackId: string) {
+    const res = await fetch(`/assets/midi/${trackId}.mid`);
+    const jsonMidi = await parseArrayBuffer(await res.arrayBuffer());
+    console.log({ jsonMidi });
   }
   private async loadPlayer(trackId: string) {
     const player = await createSpotifyPlayer(this.spotify.getToken() as string);
-    await this.spotify.setTrack(trackId, player.deviceId);
-    await this.spotify.setPlaybackDevice(player.deviceId);
-    await player.seek(0);
     this.player$.next(player);
   }
   private async loadAnalysis(trackId: string) {

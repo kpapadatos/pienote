@@ -3,7 +3,9 @@ import { BehaviorSubject } from 'rxjs';
 export class SpotifyPlayer {
     public ready!: Promise<void>;
     public deviceId!: string;
+    public trackId?: string;
     public isPlaying$ = new BehaviorSubject(false);
+    public state$ = new BehaviorSubject<ISpotifyPlayerStatus | undefined>(undefined);
     private player = new (window as any).Spotify.Player({
         name: "PieNote Player",
         getOAuthToken: (cb: (accessToken: string) => void) => {
@@ -20,6 +22,8 @@ export class SpotifyPlayer {
             });
         });
         this.player.addListener('player_state_changed', (state: any) => {
+            this.state$.next(state);
+
             if (!state) {
                 return;
             }
@@ -59,7 +63,9 @@ export class SpotifyPlayer {
         await this.player.pause();
     }
     public async getCurrentState() {
-        return await this.player.getCurrentState() as { position: number; duration: number; };
+        const state = await this.player.getCurrentState() as ISpotifyPlayerStatus;
+        this.state$.next(state);
+        return state;
     }
 }
 
@@ -68,4 +74,14 @@ export async function createSpotifyPlayer(accessToken: string) {
     const player = new SpotifyPlayer(accessToken);
     await player.ready;
     return player;
+}
+
+export interface ISpotifyPlayerStatus {
+    duration: number;
+    position: number;
+    track_window: {
+        current_track: {
+            id: string;
+        }
+    }
 }

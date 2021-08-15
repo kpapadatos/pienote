@@ -27,13 +27,12 @@ export class TrackComponent implements OnInit, OnDestroy {
   private nowEl = document.createElement('div');
   private isDead = false;
   private frameResuestId?: number;
-  private frameStack = [] as Array<{ startPositionMs: number; element: HTMLDivElement; }>;
+  private frameStack = [] as IRenderFrame[];
   private lastPositionMs?: number;
   constructor(private elementRef: ElementRef) {
     Object.assign(window, { track: this });
-    this.initMIDI();
   }
-  async initMIDI() {
+  async initMIDIInput() {
     const access = await (navigator as any).requestMIDIAccess();
     const inputs = [...access.inputs.values()];
     console.log(inputs);
@@ -62,6 +61,11 @@ export class TrackComponent implements OnInit, OnDestroy {
     }
   }
   ngOnInit(): void {
+    this.addNowBar();
+    this.initMIDIInput();
+    this.loop();
+  }
+  addNowBar() {
     assignCss(this.nowEl, {
       height: '1px',
       width: '100%',
@@ -73,11 +77,10 @@ export class TrackComponent implements OnInit, OnDestroy {
     });
 
     this.getTrack().append(this.nowEl);
-    this.loop();
   }
   async processSpacePress() {
     const THRESHOLD_MS = 150;
-    if (this.spacePressedAt) {
+    if (this.spacePressedAt && this.player.trackId) {
       const spacePressAgoMs = Date.now() - this.spacePressedAt;
       const { duration: durationMs, position: positionMs } = await this.player.getCurrentState();
       const spacePressPositionMs = positionMs - spacePressAgoMs;
@@ -94,7 +97,7 @@ export class TrackComponent implements OnInit, OnDestroy {
             beatEl.style.background = 'green';
           }
 
-          const delayMs = Math.abs(beatStartMs - spacePressPositionMs);
+          const delayMs = beatStartMs - spacePressPositionMs;
           this.delayMs.emit(delayMs);
 
           break;
@@ -107,26 +110,41 @@ export class TrackComponent implements OnInit, OnDestroy {
   }
   loop() {
     this.frameResuestId = requestAnimationFrame(async (time) => {
-      const { duration: durationMs, position: positionMs } = await this.player.getCurrentState();
+      const state = await this.player.getCurrentState();
 
-      // On pause, it does like +150ms and on resume -150ms, which causes visible hops
-      if (this.lastPositionMs !== undefined) {
-        const deltaMs = positionMs - this.lastPositionMs;
-        if (deltaMs < 0 && !this.isDead) {
-          return this.loop();
-        }
+      if (state) {
+        const { duration: durationMs, position: positionMs } = state;
+
+        // On pause, it does like +150ms and on resume -150ms, which causes visible hops
+        // if (this.lastPositionMs !== undefined) {
+        //   const deltaMs = positionMs - this.lastPositionMs;
+        //   if (deltaMs < 0 && !this.isDead) {
+        //     return this.loop();
+        //   }
+        // }
+
+        this.lastPositionMs = positionMs;
+
+        this.removeNewestFramesIfNeeded(positionMs);
+        this.removeOldestFramesIfNeeded(positionMs);
+        this.updateFramePositions(positionMs);
+        this.pushNextFrameIfNeeded(positionMs);
       }
-
-      this.lastPositionMs = positionMs;
-
-      this.removeOldestFramesIfNeeded(positionMs);
-      this.updateFramePositions(positionMs);
-      this.pushNextFrameIfNeeded(positionMs);
 
       if (!this.isDead) {
         this.loop();
       }
     });
+  }
+  removeNewestFramesIfNeeded(currentPositionMs: number) {
+    const frameThatContainsNow = this.getFrameAtPosition(currentPositionMs);
+
+    if (!frameThatContainsNow) {
+      [...this.frameStack].forEach(this.removeFrame.bind(this));
+    }
+  }
+  getFrameAtPosition(positionMs: number) {
+    return this.frameStack.find(o => o.startPositionMs <= positionMs && o.startPositionMs + TrackComponent.frameDurationMs >= positionMs);
   }
   updateFramePositions(currentPositionMs: number) {
     for (const frame of this.frameStack) {
@@ -149,10 +167,13 @@ export class TrackComponent implements OnInit, OnDestroy {
     const firstFrame = this.frameStack[0];
 
     if (firstFrame?.startPositionMs < currentPositionMs - TrackComponent.frameDurationMs * TrackComponent.FRAME_SIZE) {
-      this.frameStack.shift();
-      firstFrame.element.remove();
+      this.removeFrame(firstFrame);
       this.removeOldestFramesIfNeeded(currentPositionMs);
     }
+  }
+  removeFrame(frame: IRenderFrame) {
+    frame.element.remove();
+    this.frameStack.splice(this.frameStack.indexOf(frame), 1);
   }
   pushNextFrameIfNeeded(currentPositionMs: number) {
     const lastFrame = this.frameStack[this.frameStack.length - 1];
@@ -230,3 +251,5 @@ export class TrackComponent implements OnInit, OnDestroy {
     return element;
   }
 }
+
+interface IRenderFrame { startPositionMs: number; element: HTMLDivElement; }
