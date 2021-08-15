@@ -9,17 +9,52 @@ import { ISpotifyTrackAnalysis } from 'src/services/spotify.service';
   styleUrls: ['./track.component.scss']
 })
 export class TrackComponent implements OnInit, OnDestroy {
-  private static readonly VIEWPORT_TIME_MS = 5000; // Viewport height is a 5 second distance
-  private static readonly FRAME_SIZE = 2; // 2x viewport duration
-  private static readonly frameDurationMs = TrackComponent.VIEWPORT_TIME_MS * TrackComponent.FRAME_SIZE;
-  private get frameHeightPx() { return this.viewportHeightPx * TrackComponent.FRAME_SIZE };
+  public inputThresholdMs = 150;
+  public viewportTimeMs = 5000; // Viewport height is a 5 second distance
+  private readonly FRAME_SIZE = 2; // 2x viewport duration
+  private readonly frameDurationMs = this.viewportTimeMs * this.FRAME_SIZE;
+  private get frameHeightPx() { return this.viewportHeightPx * this.FRAME_SIZE };
   private get viewportHeightPx() { return this.getTrack().clientHeight; };
+  private isPanning = false;
+  private panStartY!: number;
+  private panStartMs!: number;
   @Output() delayMs = new EventEmitter<number>();
   @HostBinding('tabindex') tabindex = 0;
   @HostListener('keydown.space')
   onSpacePressed() {
     this.spacePressedAt = Date.now();
     this.processSpacePress();
+  }
+  onScroll(event: Event) {
+    const deltaMs = .15 * this.viewportTimeMs;
+
+    if (this.lastPositionMs !== undefined) {
+      if ((event as WheelEvent).deltaY > 0) {
+        this.player.seek(this.lastPositionMs + deltaMs);
+      } else {
+        this.player.seek(this.lastPositionMs - deltaMs);
+      }
+    }
+  }
+  onMouseDown(event: MouseEvent) {
+    if (this.lastPositionMs !== undefined) {
+      this.isPanning = true;
+      this.panStartY = event.clientY;
+      this.panStartMs = this.lastPositionMs;
+    }
+  }
+  onMouseUp() {
+    this.isPanning = false;
+    if (this.lastPositionMs !== undefined) {
+      this.player.seek(this.lastPositionMs);
+    }
+  }
+  onMouseMove(event: MouseEvent) {
+    if (this.isPanning && this.lastPositionMs !== undefined) {
+      const deltaPx = event.clientY - this.panStartY;
+      const deltaMs = this.pxToMs(deltaPx);
+      this.lastPositionMs = this.panStartMs + deltaMs;
+    }
   }
   private spacePressedAt?: number;
   @Input() player!: SpotifyPlayer;
@@ -79,13 +114,12 @@ export class TrackComponent implements OnInit, OnDestroy {
     this.getTrack().append(this.nowEl);
   }
   async processSpacePress() {
-    const THRESHOLD_MS = 150;
     if (this.spacePressedAt && this.player.trackId) {
       const spacePressAgoMs = Date.now() - this.spacePressedAt;
       const { duration: durationMs, position: positionMs } = await this.player.getCurrentState();
       const spacePressPositionMs = positionMs - spacePressAgoMs;
-      const minMs = spacePressPositionMs - THRESHOLD_MS;
-      const maxMs = spacePressPositionMs + THRESHOLD_MS;
+      const minMs = spacePressPositionMs - this.inputThresholdMs;
+      const maxMs = spacePressPositionMs + this.inputThresholdMs;
 
       for (const beat of this.analysis.beats) {
         const beatStartMs = beat.start * 1e3;
@@ -110,10 +144,10 @@ export class TrackComponent implements OnInit, OnDestroy {
   }
   loop() {
     this.frameResuestId = requestAnimationFrame(async (time) => {
-      const state = await this.player.getCurrentState();
+      const state = this.isPanning ? { position: this.lastPositionMs as number } : await this.player.getCurrentState();
 
       if (state) {
-        const { duration: durationMs, position: positionMs } = state;
+        const { position: positionMs } = state;
 
         // On pause, it does like +150ms and on resume -150ms, which causes visible hops
         // if (this.lastPositionMs !== undefined) {
@@ -136,15 +170,18 @@ export class TrackComponent implements OnInit, OnDestroy {
       }
     });
   }
+  removeFrames() {
+    [...this.frameStack].forEach(this.removeFrame.bind(this));
+  }
   removeNewestFramesIfNeeded(currentPositionMs: number) {
     const frameThatContainsNow = this.getFrameAtPosition(currentPositionMs);
 
     if (!frameThatContainsNow) {
-      [...this.frameStack].forEach(this.removeFrame.bind(this));
+      this.removeFrames();
     }
   }
   getFrameAtPosition(positionMs: number) {
-    return this.frameStack.find(o => o.startPositionMs <= positionMs && o.startPositionMs + TrackComponent.frameDurationMs >= positionMs);
+    return this.frameStack.find(o => o.startPositionMs <= positionMs && o.startPositionMs + this.frameDurationMs >= positionMs);
   }
   updateFramePositions(currentPositionMs: number) {
     for (const frame of this.frameStack) {
@@ -153,20 +190,22 @@ export class TrackComponent implements OnInit, OnDestroy {
     }
   }
   calculateFrameTopPx(frameStartPositionMs: number, currentPositionMs: number) {
-    const viewportHeightPx = this.getTrack().clientHeight;
     const fromNowMs = frameStartPositionMs - currentPositionMs;
     const fromNowPx = this.msToPx(fromNowMs);
-    return viewportHeightPx - this.frameHeightPx - fromNowPx - (viewportHeightPx * .25);
+    return this.viewportHeightPx - this.frameHeightPx - fromNowPx - (this.viewportHeightPx * .25);
   }
   msToPx(ms: number) {
-    const viewportHeightPx = this.getTrack().clientHeight;
-    const pxpms = viewportHeightPx / TrackComponent.VIEWPORT_TIME_MS;
+    const pxpms = this.viewportHeightPx / this.viewportTimeMs;
     return ms * pxpms;
+  }
+  pxToMs(px: number) {
+    const msppx = this.viewportTimeMs / this.viewportHeightPx;
+    return px * msppx;
   }
   removeOldestFramesIfNeeded(currentPositionMs: number) {
     const firstFrame = this.frameStack[0];
 
-    if (firstFrame?.startPositionMs < currentPositionMs - TrackComponent.frameDurationMs * TrackComponent.FRAME_SIZE) {
+    if (firstFrame?.startPositionMs < currentPositionMs - this.frameDurationMs * this.FRAME_SIZE) {
       this.removeFrame(firstFrame);
       this.removeOldestFramesIfNeeded(currentPositionMs);
     }
@@ -183,17 +222,16 @@ export class TrackComponent implements OnInit, OnDestroy {
     }
   }
   pushNextFrame(currentPositionMs: number) {
-    const viewportHeightPx = this.getTrack().clientHeight;
     const startPositionMs = this.getNextFrameStartPositionMs(currentPositionMs);
     const element = document.createElement('div');
     const topPx = this.calculateFrameTopPx(startPositionMs, currentPositionMs);
 
     element.setAttribute('start', startPositionMs.toString());
-    element.setAttribute('end', (startPositionMs + TrackComponent.frameDurationMs).toString())
+    element.setAttribute('end', (startPositionMs + this.frameDurationMs).toString())
 
     assignCss(element, {
       position: 'absolute',
-      height: `${viewportHeightPx * TrackComponent.FRAME_SIZE}px`,
+      height: `${this.viewportHeightPx * this.FRAME_SIZE}px`,
       boxShadow: 'inset 0 0 0 1px black',
       width: '100%',
       top: `${topPx}px`,
@@ -213,7 +251,7 @@ export class TrackComponent implements OnInit, OnDestroy {
       const beatStartMs = beat.start * 1e3;
       if (beatStartMs < frame.startPositionMs) {
         continue;
-      } else if (beatStartMs >= frame.startPositionMs && beatStartMs < frame.startPositionMs + TrackComponent.frameDurationMs) {
+      } else if (beatStartMs >= frame.startPositionMs && beatStartMs < frame.startPositionMs + this.frameDurationMs) {
         const relativeBeatStartMs = beatStartMs - frame.startPositionMs;
         const beatStartPx = this.frameHeightPx - this.msToPx(relativeBeatStartMs);
         const lineEl = this.createLineElement('#202d49', beatStartPx, `beat_${index}`);
@@ -229,7 +267,7 @@ export class TrackComponent implements OnInit, OnDestroy {
     let startPositionMs = currentPositionMs;
 
     if (lastFrame) {
-      startPositionMs = lastFrame.startPositionMs + TrackComponent.frameDurationMs + 1;
+      startPositionMs = lastFrame.startPositionMs + this.frameDurationMs + 1;
     }
 
     return startPositionMs;

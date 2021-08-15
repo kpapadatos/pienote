@@ -1,1 +1,7 @@
-<div id="track"></div>
+<div
+  id="track"
+  (mousedown)="onMouseDown($event)"
+  (mouseup)="onMouseUp()"
+  (mousemove)="onMouseMove($event)"
+  (mousewheel)="onScroll($event)"
+></div>

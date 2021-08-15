@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { faPause, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faPause, faPlay } from '@fortawesome/free-solid-svg-icons';
 import { parseArrayBuffer } from 'midi-json-parser';
 import { BehaviorSubject } from 'rxjs';
 import { createSpotifyPlayer, SpotifyPlayer } from 'src/common/classes/SpotifyPlayer';
@@ -17,6 +17,7 @@ export class GameComponent implements OnInit, OnDestroy {
   player$ = new BehaviorSubject<SpotifyPlayer | undefined>(undefined);
   faPlay = faPlay;
   faPause = faPause;
+  faInfoCircle = faInfoCircle;
   trackId?: string;
   constructor(private route: ActivatedRoute, private spotify: SpotifyService) { }
   ngOnDestroy(): void {

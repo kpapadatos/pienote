@@ -13,10 +13,56 @@
     ></app-seek-bar>
     <div #delay></div>
   </div>
-  <app-track
-    *ngIf="analysis$ | async as analysis"
-    [player]="player"
-    [analysis]="analysis"
-    (delayMs)="delay.innerHTML = $event.toFixed(0).toString()"
-  ></app-track>
+  <ng-container *ngIf="analysis$ | async as analysis">
+    <div class="flex flex-row gap-3 p-3 items-center text-xs">
+      <div class="flex flex-row gap-1 items-center">
+        <fa-icon
+          [icon]="faInfoCircle"
+          class="text-sm opacity-50"
+          title="Duration in milliseconds of the visible content in the viewport."
+        ></fa-icon>
+        viewportMs:
+        <input
+          class="bg-gray-800 px-2 py-1 rounded text-xs w-16"
+          type="number"
+          [(ngModel)]="track.viewportTimeMs"
+          (ngModelChange)="track.removeFrames()"
+        />
+      </div>
+      <div class="flex flex-row gap-1 items-center">
+        <fa-icon
+          [icon]="faInfoCircle"
+          class="text-sm opacity-50"
+          title="Offset in milliseconds where your input will still count."
+        ></fa-icon>
+        thresholdMs:
+        <input
+          class="bg-gray-800 px-2 py-1 rounded text-xs w-16"
+          type="number"
+          [(ngModel)]="track.inputThresholdMs"
+        />
+      </div>
+      <button
+        class="
+          ml-auto
+          bg-gray-700
+          hover:bg-gray-600
+          px-2
+          py-1
+          rounded
+          shadow-sm
+          transition-all
+        "
+        (click)="track.removeFrames()"
+      >
+        repaint
+      </button>
+    </div>
+    <app-track
+      #track
+      [player]="player"
+      [analysis]="analysis"
+      (delayMs)="delay.innerHTML = $event.toFixed(0).toString()"
+    ></app-track>
+  </ng-container>
 </ng-container>
