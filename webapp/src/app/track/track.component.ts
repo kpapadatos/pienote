@@ -30,6 +30,25 @@ export class TrackComponent implements OnInit, OnDestroy {
   private frameStack = [] as Array<{ startPositionMs: number; element: HTMLDivElement; }>;
   constructor(private elementRef: ElementRef) {
     Object.assign(window, { track: this });
+    this.initMIDI();
+  }
+  async initMIDI() {
+    const access = await (navigator as any).requestMIDIAccess();
+    const inputs = [...access.inputs.values()];
+    console.log(inputs);
+    inputs[0].addEventListener('midimessage', (message: any) => {
+      if (message.data[0] === 254) {
+        return;
+      }
+
+      if (
+        message.data[1] === 41
+      ) {
+        this.onSpacePressed();
+      }
+
+      console.log(message.data);
+    })
   }
   getTrack() {
     return this.elementRef.nativeElement.children[0] as HTMLDivElement;

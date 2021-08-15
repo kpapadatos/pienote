@@ -64,6 +64,7 @@ export class SpotifyPlayer {
 }
 
 export async function createSpotifyPlayer(accessToken: string) {
+    await (window as any)._spotifyReady;
     const player = new SpotifyPlayer(accessToken);
     await player.ready;
     return player;
