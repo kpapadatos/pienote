@@ -42,6 +42,35 @@
           [(ngModel)]="track.inputThresholdMs"
         />
       </div>
+      <div class="flex flex-row gap-1 items-center">
+        <fa-icon
+          [icon]="faInfoCircle"
+          class="text-sm opacity-50"
+          title="Enabled/disables editing of charts."
+        ></fa-icon>
+        editMode:
+        <input
+          class="bg-gray-800 px-2 py-1 rounded text-xs"
+          type="checkbox"
+          [(ngModel)]="track.isEditMode"
+          (ngModelChange)="track.removeFrames()"
+        />
+      </div>
+      <div class="flex flex-row gap-1 items-center">
+        <fa-icon
+          [icon]="faInfoCircle"
+          class="text-sm opacity-50"
+          title="Determines editable divisions of a beat."
+        ></fa-icon>
+        notesBetweenBeats:
+        <input
+          class="bg-gray-800 px-2 py-1 rounded text-xs w-16"
+          type="number"
+          [(ngModel)]="track.notesBetweenBeats"
+          (ngModelChange)="track.removeFrames()"
+          [min]="0"
+        />
+      </div>
       <button
         class="
           ml-auto

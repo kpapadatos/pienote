@@ -60,7 +60,18 @@ export class SpotifyService {
 }
 
 export interface ISpotifyTrackAnalysis {
-    beats: Array<{ start: number; duration: number; confidence: number; }>;
+    beats: Array<{
+        start: number;
+        duration: number;
+        confidence: number;
+    }>;
+    segments: Array<{
+        duration: number;
+        loudness_max: number;
+        loudness_max_time: number;
+        loudness_start: number;
+        start: number;
+    }>;
 }
 
 export interface ISpotifyTrack {
