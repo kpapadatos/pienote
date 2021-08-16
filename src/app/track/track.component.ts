@@ -10,6 +10,7 @@ import { ISpotifyTrackAnalysis } from 'src/services/spotify.service';
 })
 export class TrackComponent implements OnInit, OnDestroy {
   public isEditMode = true;
+  public isDevMode = false;
   public notesBetweenBeats = 1;
   public inputThresholdMs = 150;
   public viewportTimeMs = 5000; // Viewport height is a 5 second distance
@@ -239,7 +240,7 @@ export class TrackComponent implements OnInit, OnDestroy {
     assignCss(element, {
       position: 'absolute',
       height: `${this.frameHeightPx}px`,
-      boxShadow: 'inset 0 0 0 1px black',
+      boxShadow: this.isDevMode ? 'inset 0 0 0 1px black' : 'none',
       width: '100%',
       top: `${topPx}px`,
       left: '0'
@@ -313,7 +314,7 @@ export class TrackComponent implements OnInit, OnDestroy {
           color: '#202d49',
           topPx: beatStartPx,
           id: `beat_${index}`,
-          css: { height: '2px', zIndex: '1' }
+          css: { height: '2px' }
         });
         lineEl.setAttribute('start', beatStartMs.toString());
         frame.element.appendChild(lineEl);
@@ -351,6 +352,7 @@ export class TrackComponent implements OnInit, OnDestroy {
                 marginTop: '-10px',
                 background: note.color
               });
+              noteEl.addEventListener('click', () => noteEl.style.opacity = '1');
               editLineEl.appendChild(noteEl);
             }
 
@@ -365,7 +367,7 @@ export class TrackComponent implements OnInit, OnDestroy {
   }
   getNextFrameStartPositionMs(currentPositionMs: number) {
     const lastFrame = this.frameStack[this.frameStack.length - 1];
-    let startPositionMs = currentPositionMs;
+    let startPositionMs = currentPositionMs - (this.viewportTimeMs * .25);
 
     if (lastFrame) {
       startPositionMs = lastFrame.startPositionMs + this.frameDurationMs + 1;
@@ -381,7 +383,11 @@ export class TrackComponent implements OnInit, OnDestroy {
     css?: Partial<CSSStyleDeclaration>
   }) {
     const element = document.createElement('div');
-    element.innerHTML = options.id || '';
+
+    if (this.isDevMode) {
+      element.innerHTML = options.id || '';
+    }
+
     element.id = options.id || '';
 
     if (options.classes) {

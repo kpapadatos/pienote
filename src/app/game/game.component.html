@@ -46,7 +46,21 @@
         <fa-icon
           [icon]="faInfoCircle"
           class="text-sm opacity-50"
-          title="Enabled/disables editing of charts."
+          title="Enables/disables debugging visuals."
+        ></fa-icon>
+        devMode:
+        <input
+          class="bg-gray-800 px-2 py-1 rounded text-xs"
+          type="checkbox"
+          [(ngModel)]="track.isDevMode"
+          (ngModelChange)="track.removeFrames()"
+        />
+      </div>
+      <div class="flex flex-row gap-1 items-center">
+        <fa-icon
+          [icon]="faInfoCircle"
+          class="text-sm opacity-50"
+          title="Enables/disables editing of charts."
         ></fa-icon>
         editMode:
         <input
