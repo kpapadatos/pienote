@@ -345,14 +345,16 @@ export class TrackComponent implements OnInit, OnDestroy {
               { color: 'green', width: '10%' }
             ]) {
               const noteEl = document.createElement('div');
-              noteEl.classList.add('rounded-full', 'opacity-25', 'hover:opacity-100', 'cursor-pointer');
+              noteEl.classList.add('rounded-full', 'opacity-10', 'hover:opacity-75', 'cursor-pointer');
               assignCss(noteEl, {
                 width: note.width,
                 height: '20px',
                 marginTop: '-10px',
                 background: note.color
               });
-              noteEl.addEventListener('click', () => noteEl.style.opacity = '1');
+              noteEl.addEventListener('click', () => {
+                noteEl.style.opacity = noteEl.style.opacity === '1' ? '' : '1';
+              });
               editLineEl.appendChild(noteEl);
             }
 
