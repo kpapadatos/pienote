@@ -47,6 +47,10 @@ export class TrackComponent implements OnInit, OnDestroy {
     this.spacePressedAt = Date.now();
     this.processSpacePress();
   }
+  @HostListener('dblclick')
+  private onDoubleClick() {
+    this.player.togglePlay();
+  }
   public onScroll(event: Event) {
     const deltaMs = .15 * this.viewportTimeMs;
 
