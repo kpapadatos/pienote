@@ -8,8 +8,8 @@ import { MIDIService } from './midi.service';
 @Injectable()
 export class KeymapService {
     private readonly keymapKey = 'keymap';
-    private keymap = this.getKeymap();
-    private key$ = new Subject<{ noteIds: string[]; }>();
+    public keymap = this.getKeymap();
+    public key$ = new Subject<{ noteIds: string[]; }>();
     constructor(
         private midi: MIDIService,
         private keyboard: KeyboardService
@@ -51,7 +51,14 @@ export class KeymapService {
         if (keymapJson) {
             return JSON.parse(keymapJson);
         } else {
-            return {};
+            return {
+                kick: { midi: [], keyboard: ['Space'] },
+                snare: { midi: [], keyboard: ['KeyC'] },
+                hihat: { midi: [], keyboard: ['KeyM'] },
+                hightom: { midi: [], keyboard: ['KeyJ'] },
+                lowtom: { midi: [], keyboard: ['KeyK'] },
+                crash: { midi: [], keyboard: ['KeyL'] },
+            };
         }
     }
     private isMIDIEqual(a: MIDISignal, b: MIDISignal) {

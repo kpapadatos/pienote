@@ -1,11 +1,13 @@
 import { Component, ElementRef, EventEmitter, HostBinding, HostListener, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { equal, Fraction } from 'mathjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { equal, fraction, Fraction } from 'mathjs';
 import { SpotifyPlayer } from 'src/common/classes/SpotifyPlayer';
 import assignCss from 'src/common/fn/assignCss';
 import { KeymapService } from 'src/services/keymap.service';
 import { ISpotifyTrackAnalysis } from 'src/services/spotify.service';
 import { ChartsService, INote } from './charts.service';
 
+@UntilDestroy()
 @Component({
   selector: 'app-track',
   templateUrl: './track.component.html',
@@ -28,7 +30,6 @@ export class TrackComponent implements OnInit, OnDestroy {
   private panStartMs!: number;
   @Output() public delayMs = new EventEmitter<number>();
   @HostBinding('tabindex') public tabindex = 0;
-  private spacePressedAt?: number;
   @Input() public trackId!: string;
   @Input() public player!: SpotifyPlayer;
   @Input() public analysis!: ISpotifyTrackAnalysis;
@@ -43,11 +44,6 @@ export class TrackComponent implements OnInit, OnDestroy {
     private keymap: KeymapService
   ) {
     Object.assign(window, { track: this });
-  }
-  @HostListener('keydown.space')
-  private onSpacePressed() {
-    this.spacePressedAt = Date.now();
-    this.processSpacePress();
   }
   @HostListener('dblclick')
   private onDoubleClick() {
@@ -95,12 +91,72 @@ export class TrackComponent implements OnInit, OnDestroy {
     }
   }
   public ngOnInit(): void {
+    this.keymap.key$.pipe(untilDestroyed(this)).subscribe(async ({ noteIds }) => {
+      console.log(noteIds);
+
+      if (this.player.isPlaying$.getValue()) {
+        const { position } = await this.player.getCurrentState();
+        const positionMinMs = position - this.inputThresholdMs;
+        const positionMaxMs = position + this.inputThresholdMs;
+        // Find all note within threshold bounds
+        const notesInThreshold = this.getNotesInTimeRange(positionMinMs, positionMaxMs);
+        console.log(notesInThreshold);
+
+        // Find match starting from oldest
+        const validNotes = new Set(noteIds);
+        const match = notesInThreshold.sort((a, b) => a.noteStartMs - b.noteStartMs).find(o => validNotes.has(o.noteId));
+
+        if (match) {
+          // @todo Spend it
+
+          // Reflect in UI
+          const { n, d } = fraction(match.divisions, match.lineIndex) as { n: number; d: number; };
+          const momentId = [match.beatIndex, n, d].join();
+          const element = this.elementRef.nativeElement.querySelector(`[momentId="${momentId}"] [noteId="${match.noteId}"]`);
+
+          if (element) {
+            element.style.background = 'cyan';
+          }
+        } else {
+          // @todo Punish no match
+        }
+      }
+    });
     this.charts.setTrackId(this.trackId);
     this.addNowBar();
     this.loop();
   }
   public removeFrames() {
     [...this.frameStack].forEach(this.removeFrame.bind(this));
+  }
+  private getNotesInTimeRange(startMs: number, endMs: number) {
+    const notes = [] as Array<INote & { noteStartMs: number; }>;
+
+    for (const beat of this.analysis.beats) {
+      const index = this.analysis.beats.indexOf(beat);
+
+      if (index) {
+        const prevBeat = this.analysis.beats[index - 1];
+        const beatStartMs = prevBeat.start * 1e3;
+        const beatEndMs = beat.start * 1e3;
+        if (this.isOverlap([beatStartMs, beatEndMs], [startMs, endMs])) {
+          const beatNotes = this.charts.getBeat(index);
+          const beatDurationMs = beatEndMs - beatStartMs;
+          for (const note of beatNotes) {
+            const divisionsMs = beatDurationMs / note.divisions;
+            const noteStartMs = beatStartMs + (divisionsMs * note.lineIndex);
+
+            if (this.isOverlap([startMs, endMs], [noteStartMs, noteStartMs])) {
+              notes.push({ ...note, noteStartMs });
+            }
+          }
+        } else if (notes.length) {
+          break;
+        }
+      }
+    }
+
+    return notes;
   }
   private addNowBar() {
     assignCss(this.nowEl, {
@@ -114,34 +170,6 @@ export class TrackComponent implements OnInit, OnDestroy {
     });
 
     this.getTrack().append(this.nowEl);
-  }
-  private async processSpacePress() {
-    if (this.spacePressedAt && this.player.trackId) {
-      const spacePressAgoMs = Date.now() - this.spacePressedAt;
-      const { duration: durationMs, position: positionMs } = await this.player.getCurrentState();
-      const spacePressPositionMs = positionMs - spacePressAgoMs;
-      const minMs = spacePressPositionMs - this.inputThresholdMs;
-      const maxMs = spacePressPositionMs + this.inputThresholdMs;
-
-      for (const beat of this.analysis.beats) {
-        const beatStartMs = beat.start * 1e3;
-        if (beatStartMs < maxMs && beatStartMs > minMs) {
-          const index = this.analysis.beats.indexOf(beat);
-          const beatEl = document.getElementById(`beat_${index}`);
-
-          if (beatEl) {
-            beatEl.style.background = 'green';
-          }
-
-          const delayMs = beatStartMs - spacePressPositionMs;
-          this.delayMs.emit(delayMs);
-
-          break;
-        }
-      }
-
-      this.spacePressedAt = undefined;
-    }
   }
   private loop() {
     this.frameResuestId = requestAnimationFrame(async (time) => {
@@ -333,7 +361,7 @@ export class TrackComponent implements OnInit, OnDestroy {
                 beatWindow.relativeStartMs
               );
               frame.element.appendChild(noteLineEl);
-              renderedLineTimes.push(this.charts.getLineTime(divisions, editLines));
+              renderedLineTimes.push(this.charts.getLineTime(divisions, lineIndex));
             }
           }
 
@@ -376,6 +404,11 @@ export class TrackComponent implements OnInit, OnDestroy {
       classes: ['flex', 'flex-row', 'justify-center', 'gap-6', 'text-xxs']
     });
 
+    const { n, d } = fraction(divisions, lineIndex) as { n: number; d: number; };
+    const momentId = [beatIndex, n, d].join();
+
+    editLineEl.setAttribute('momentId', momentId);
+
     if (this.isDevMode) {
       editLineEl.innerHTML = beatIndex.toString();
     }
@@ -397,6 +430,7 @@ export class TrackComponent implements OnInit, OnDestroy {
       } as INote;
 
       noteEl.classList.add('rounded-full', 'opacity-10', 'hover:opacity-75', 'cursor-pointer');
+      noteEl.setAttribute('noteId', note.id);
 
       const kickBoxShadow = '0 0 0 2px #202d49';
       const isOn = this.charts.findNote(noteRecord);
