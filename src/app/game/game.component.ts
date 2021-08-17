@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faInfoCircle, faPause, faPlay } from '@fortawesome/free-solid-svg-icons';
-import { parseArrayBuffer } from 'midi-json-parser';
 import { BehaviorSubject } from 'rxjs';
 import { createSpotifyPlayer, SpotifyPlayer } from 'src/common/classes/SpotifyPlayer';
 import { ISpotifyTrackAnalysis, SpotifyService } from 'src/services/spotify.service';
@@ -32,7 +31,6 @@ export class GameComponent implements OnInit, OnDestroy {
       this.trackId = params.trackId;
       this.loadPlayer();
       this.loadAnalysis();
-      this.tryGetMIDIFile();
     });
   }
   public seek(pc: number) {
@@ -52,11 +50,6 @@ export class GameComponent implements OnInit, OnDestroy {
     } else {
       await player.togglePlay();
     }
-  }
-  private async tryGetMIDIFile() {
-    const res = await fetch(`/assets/midi/${this.trackId}.mid`);
-    const jsonMidi = await parseArrayBuffer(await res.arrayBuffer());
-    console.log({ jsonMidi });
   }
   private async loadPlayer() {
     const player = await createSpotifyPlayer(this.spotify);

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MIDIService } from 'src/services/midi.service';
 import { StoreService } from 'src/services/store.service';
 
@@ -9,11 +9,5 @@ import { StoreService } from 'src/services/store.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [StoreService, MIDIService]
 })
-export class AuthRootComponent implements OnInit {
-
-  constructor() { }
-
-  public ngOnInit(): void {
-  }
-
+export class AuthRootComponent {
 }

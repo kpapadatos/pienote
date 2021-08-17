@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, HostBinding, HostListener, Input, 
 import { equal, Fraction } from 'mathjs';
 import { SpotifyPlayer } from 'src/common/classes/SpotifyPlayer';
 import assignCss from 'src/common/fn/assignCss';
+import { MIDIService } from 'src/services/midi.service';
 import { ISpotifyTrackAnalysis } from 'src/services/spotify.service';
 import { ChartsService, INote } from './charts.service';
 
@@ -38,7 +39,8 @@ export class TrackComponent implements OnInit, OnDestroy {
   private lastPositionMs?: number;
   constructor(
     private elementRef: ElementRef,
-    private charts: ChartsService
+    private charts: ChartsService,
+    private midi: MIDIService
   ) {
     Object.assign(window, { track: this });
   }
@@ -95,29 +97,10 @@ export class TrackComponent implements OnInit, OnDestroy {
   public ngOnInit(): void {
     this.charts.setTrackId(this.trackId);
     this.addNowBar();
-    this.initMIDIInput();
     this.loop();
   }
   public removeFrames() {
     [...this.frameStack].forEach(this.removeFrame.bind(this));
-  }
-  private async initMIDIInput() {
-    const access = await (navigator as any).requestMIDIAccess();
-    const inputs = [...access.inputs.values()];
-    console.log(inputs);
-    inputs[0]?.addEventListener('midimessage', (message: any) => {
-      if (message.data[0] === 254) {
-        return;
-      }
-
-      if (
-        message.data[1] === 41
-      ) {
-        this.onSpacePressed();
-      }
-
-      console.log(message.data);
-    });
   }
   private addNowBar() {
     assignCss(this.nowEl, {
