@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { MIDIService } from 'src/services/midi.service';
 import { StoreService } from 'src/services/store.service';
 
 @Component({
@@ -6,13 +7,13 @@ import { StoreService } from 'src/services/store.service';
   templateUrl: './auth-root.component.html',
   styleUrls: ['./auth-root.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [StoreService]
+  providers: [StoreService, MIDIService]
 })
 export class AuthRootComponent implements OnInit {
 
   constructor() { }
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
   }
 
 }
