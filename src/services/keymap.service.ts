@@ -67,11 +67,11 @@ export class KeymapService {
             */
             return {
                 kick: { midi: [[153, 36, 0]], keyboard: ['Space'] },
-                snare: { midi: [[153, 36, 0]], keyboard: ['KeyC'] },
-                hihat: { midi: [[153, 36, 0]], keyboard: ['KeyM'] },
-                hightom: { midi: [[153, 36, 0]], keyboard: ['KeyJ'] },
-                lowtom: { midi: [[153, 36, 0]], keyboard: ['KeyK'] },
-                crash: { midi: [[153, 36, 0]], keyboard: ['KeyL'] },
+                snare: { midi: [[153, 38, 0]], keyboard: ['KeyC'] },
+                hihat: { midi: [[153, 26, 0], [153, 42, 0]], keyboard: ['KeyM'] },
+                hightom: { midi: [[153, 48, 0]], keyboard: ['KeyJ'] },
+                lowtom: { midi: [[153, 41, 0]], keyboard: ['KeyK'] },
+                crash: { midi: [[153, 55, 0]], keyboard: ['KeyL'] },
             };
         }
     }
