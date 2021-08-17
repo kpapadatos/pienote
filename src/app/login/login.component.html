@@ -9,7 +9,7 @@
     items-center
     gap-2
   "
-  [href]="getSpotifyOAuthUrl()"
+  [href]="oAuthUrl | async"
   [style.background-color]="'#1db954'"
   ><fa-icon [icon]="faSpotify" size="lg"></fa-icon>Log in with Spotify</a
 >

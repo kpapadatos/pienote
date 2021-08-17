@@ -14,7 +14,7 @@ export class StoreService {
         this.init();
     }
     public logout() {
-        this.spotify.setToken('');
+        this.spotify.clearSessionTokens();
         this.router.navigate(['login']);
     }
     private async init() {

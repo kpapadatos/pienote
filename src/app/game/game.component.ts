@@ -13,17 +13,17 @@ import { ISpotifyTrackAnalysis, SpotifyService } from 'src/services/spotify.serv
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GameComponent implements OnInit, OnDestroy {
-  analysis$ = new BehaviorSubject<ISpotifyTrackAnalysis | undefined>(undefined);
-  player$ = new BehaviorSubject<SpotifyPlayer | undefined>(undefined);
-  faPlay = faPlay;
-  faPause = faPause;
-  faInfoCircle = faInfoCircle;
-  trackId?: string;
+  public analysis$ = new BehaviorSubject<ISpotifyTrackAnalysis | undefined>(undefined);
+  public player$ = new BehaviorSubject<SpotifyPlayer | undefined>(undefined);
+  public faPlay = faPlay;
+  public faPause = faPause;
+  public faInfoCircle = faInfoCircle;
+  public trackId?: string;
   constructor(private route: ActivatedRoute, private spotify: SpotifyService) { }
-  ngOnDestroy(): void {
+  public ngOnDestroy(): void {
     this.player$.getValue()?.dispose();
   }
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.route.params.subscribe(async params => {
       this.player$.getValue()?.dispose();
       this.player$.next(undefined);
@@ -35,7 +35,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.tryGetMIDIFile(params.trackId);
     });
   }
-  seek(pc: number) {
+  public seek(pc: number) {
     const player = this.player$.getValue();
     const state = player?.state$.getValue();
     if (player?.trackId && state?.duration) {
@@ -43,7 +43,7 @@ export class GameComponent implements OnInit, OnDestroy {
       player.seek(pc * state?.duration);
     }
   }
-  async togglePlay() {
+  public async togglePlay() {
     const player = this.player$.getValue() as SpotifyPlayer;
     const trackId = this.trackId as string;
     if (!player.trackId) {
@@ -59,7 +59,7 @@ export class GameComponent implements OnInit, OnDestroy {
     console.log({ jsonMidi });
   }
   private async loadPlayer(trackId: string) {
-    const player = await createSpotifyPlayer(this.spotify.getToken() as string);
+    const player = await createSpotifyPlayer(this.spotify.getAccessToken() as string);
     this.player$.next(player);
   }
   private async loadAnalysis(trackId: string) {

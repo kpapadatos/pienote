@@ -27,9 +27,11 @@
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
     "@fortawesome/free-brands-svg-icons": "^5.15.4",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
+    "codelyzer": "^6.0.2",
     "midi-json-parser": "^8.0.45",
     "rxjs": "~6.6.0",
     "tslib": "^2.3.0",
+    "tslint": "^6.1.3",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {
