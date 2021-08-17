@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, HostBinding, HostListener, Input, 
 import { equal, Fraction } from 'mathjs';
 import { SpotifyPlayer } from 'src/common/classes/SpotifyPlayer';
 import assignCss from 'src/common/fn/assignCss';
-import { MIDIService } from 'src/services/midi.service';
+import { KeymapService } from 'src/services/keymap.service';
 import { ISpotifyTrackAnalysis } from 'src/services/spotify.service';
 import { ChartsService, INote } from './charts.service';
 
@@ -40,7 +40,7 @@ export class TrackComponent implements OnInit, OnDestroy {
   constructor(
     private elementRef: ElementRef,
     private charts: ChartsService,
-    private midi: MIDIService
+    private keymap: KeymapService
   ) {
     Object.assign(window, { track: this });
   }

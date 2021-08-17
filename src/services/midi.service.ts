@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
+import { MIDISignal } from './keymap.service';
 
 @Injectable()
 export class MIDIService {
     public inputs$ = new BehaviorSubject<any[]>([]);
-    public key$ = new Subject<number[]>();
+    public key$ = new Subject<MIDISignal>();
     constructor() {
         this.initializeMIDI();
     }
