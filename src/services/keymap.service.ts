@@ -51,18 +51,32 @@ export class KeymapService {
         if (keymapJson) {
             return JSON.parse(keymapJson);
         } else {
+            /*
+            * 1st byte: open 153, close 157
+            * 2nd byte:
+            *   kick 36
+            *   ride 51
+            *   crash 55
+            *   hightom 48
+            *   closedhihat 42
+            *   openhihat 26
+            *   snare 38
+            *   midtom 45
+            *   lowtom 41
+            * 3rd byte: velocity
+            */
             return {
-                kick: { midi: [], keyboard: ['Space'] },
-                snare: { midi: [], keyboard: ['KeyC'] },
-                hihat: { midi: [], keyboard: ['KeyM'] },
-                hightom: { midi: [], keyboard: ['KeyJ'] },
-                lowtom: { midi: [], keyboard: ['KeyK'] },
-                crash: { midi: [], keyboard: ['KeyL'] },
+                kick: { midi: [[153, 36, 0]], keyboard: ['Space'] },
+                snare: { midi: [[153, 36, 0]], keyboard: ['KeyC'] },
+                hihat: { midi: [[153, 36, 0]], keyboard: ['KeyM'] },
+                hightom: { midi: [[153, 36, 0]], keyboard: ['KeyJ'] },
+                lowtom: { midi: [[153, 36, 0]], keyboard: ['KeyK'] },
+                crash: { midi: [[153, 36, 0]], keyboard: ['KeyL'] },
             };
         }
     }
     private isMIDIEqual(a: MIDISignal, b: MIDISignal) {
-        return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+        return a[1] === b[1];
     }
 }
 
