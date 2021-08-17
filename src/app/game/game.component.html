@@ -1,4 +1,4 @@
-<ng-container *ngIf="player$ | async as player">
+<ng-container *ngIf="trackId && (player$ | async) as player">
   <div class="flex flex-row items-center p-3 gap-3">
     <fa-icon
       [icon]="(player.isPlaying$ | async) ? faPause : faPlay"
@@ -103,6 +103,7 @@
     </div>
     <app-track
       #track
+      [trackId]="trackId"
       [player]="player"
       [analysis]="analysis"
       (delayMs)="delay.innerHTML = $event.toFixed(0).toString()"

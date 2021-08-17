@@ -28,6 +28,7 @@
     "@fortawesome/free-brands-svg-icons": "^5.15.4",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
     "codelyzer": "^6.0.2",
+    "mathjs": "^9.4.4",
     "midi-json-parser": "^8.0.45",
     "rxjs": "~6.6.0",
     "tslib": "^2.3.0",

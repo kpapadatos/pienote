@@ -112,7 +112,7 @@ export class SpotifyService {
             authorization: `Bearer ${this.getAccessToken()}`
         };
     }
-    private async refreshTokens() {
+    public async refreshTokens() {
         const form = new URLSearchParams();
 
         form.append('client_id', this.clientId);

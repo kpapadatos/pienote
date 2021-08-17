@@ -30,9 +30,9 @@ export class GameComponent implements OnInit, OnDestroy {
       this.analysis$.next(undefined);
 
       this.trackId = params.trackId;
-      this.loadPlayer(params.trackId);
-      this.loadAnalysis(params.trackId);
-      this.tryGetMIDIFile(params.trackId);
+      this.loadPlayer();
+      this.loadAnalysis();
+      this.tryGetMIDIFile();
     });
   }
   public seek(pc: number) {
@@ -53,16 +53,16 @@ export class GameComponent implements OnInit, OnDestroy {
       await player.togglePlay();
     }
   }
-  private async tryGetMIDIFile(trackId: string) {
-    const res = await fetch(`/assets/midi/${trackId}.mid`);
+  private async tryGetMIDIFile() {
+    const res = await fetch(`/assets/midi/${this.trackId}.mid`);
     const jsonMidi = await parseArrayBuffer(await res.arrayBuffer());
     console.log({ jsonMidi });
   }
-  private async loadPlayer(trackId: string) {
-    const player = await createSpotifyPlayer(this.spotify.getAccessToken() as string);
+  private async loadPlayer() {
+    const player = await createSpotifyPlayer(this.spotify);
     this.player$.next(player);
   }
-  private async loadAnalysis(trackId: string) {
-    this.analysis$.next(await this.spotify.getTrackAnalysis(trackId));
+  private async loadAnalysis() {
+    this.analysis$.next(await this.spotify.getTrackAnalysis(this.trackId as string));
   }
 }

@@ -1,4 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
+import { SpotifyService } from 'src/services/spotify.service';
 
 export class SpotifyPlayer {
     public ready!: Promise<void>;
@@ -7,12 +8,13 @@ export class SpotifyPlayer {
     public isPlaying$ = new BehaviorSubject(false);
     public state$ = new BehaviorSubject<ISpotifyPlayerStatus | undefined>(undefined);
     private player = new (window as any).Spotify.Player({
-        name: "PieNote Player",
-        getOAuthToken: (cb: (accessToken: string) => void) => {
-            cb(this.accessToken);
+        name: 'PieNote Player',
+        getOAuthToken: async (cb: (accessToken: string) => void) => {
+            await this.spotify.refreshTokens();
+            cb(this.spotify.getAccessToken() as string);
         },
     });
-    constructor(private accessToken: string) {
+    constructor(private spotify: SpotifyService) {
         Object.assign(window, { player: this.player });
         this.player.connect();
         this.ready = new Promise(resolve => {
@@ -34,20 +36,20 @@ export class SpotifyPlayer {
                 this.isPlaying$.next(isPlaying);
             }
         });
-        this.player.addListener("initialization_error", ({ message }: { message: string }) => {
+        this.player.addListener('initialization_error', ({ message }: { message: string }) => {
             console.error(message);
         });
-        this.player.addListener("authentication_error", ({ message }: { message: string }) => {
+        this.player.addListener('authentication_error', ({ message }: { message: string }) => {
             console.error(message);
         });
-        this.player.addListener("account_error", ({ message }: { message: string }) => {
+        this.player.addListener('account_error', ({ message }: { message: string }) => {
             console.error(message);
         });
-        this.player.addListener("playback_error", ({ message }: { message: string }) => {
+        this.player.addListener('playback_error', ({ message }: { message: string }) => {
             console.error(message);
         });
-        this.player.addListener("not_ready", ({ device_id }: { device_id: string }) => {
-            console.log("Device ID has gone offline", device_id);
+        this.player.addListener('not_ready', ({ device_id }: { device_id: string }) => {
+            console.log('Device ID has gone offline', device_id);
         });
     }
     public dispose() {
@@ -69,9 +71,9 @@ export class SpotifyPlayer {
     }
 }
 
-export async function createSpotifyPlayer(accessToken: string) {
+export async function createSpotifyPlayer(spotify: SpotifyService) {
     await (window as any)._spotifyReady;
-    const player = new SpotifyPlayer(accessToken);
+    const player = new SpotifyPlayer(spotify);
     await player.ready;
     return player;
 }
@@ -83,5 +85,5 @@ export interface ISpotifyPlayerStatus {
         current_track: {
             id: string;
         }
-    }
+    };
 }
