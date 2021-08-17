@@ -27,6 +27,7 @@
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
     "@fortawesome/free-brands-svg-icons": "^5.15.4",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
+    "@ngneat/until-destroy": "^8.1.1",
     "codelyzer": "^6.0.2",
     "mathjs": "^9.4.4",
     "midi-json-parser": "^8.0.45",

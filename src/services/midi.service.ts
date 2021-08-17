@@ -4,15 +4,9 @@ import { BehaviorSubject, Subject } from 'rxjs';
 @Injectable()
 export class MIDIService {
     public inputs$ = new BehaviorSubject<any[]>([]);
-    public key$ = new Subject<{ input: 'MIDI' | 'keyboard'; data: string | number[]; }>();
+    public key$ = new Subject<number[]>();
     constructor() {
-        this.initializeKeyboard();
         this.initializeMIDI();
-    }
-    private async initializeKeyboard() {
-        document.addEventListener('keydown', event => {
-            this.key$.next({ input: 'keyboard', data: event.code });
-        });
     }
     private async initializeMIDI() {
         const access = await (navigator as any).requestMIDIAccess();
@@ -25,7 +19,7 @@ export class MIDIService {
             }
 
             access.onstatechange = (event: any) => {
-                console.log({ event });
+                this.inputs$.next([...access.inputs.values()]);
                 if (event.port?.type === 'input') {
                     event.port.onmidimessage = this.handleMIDIMessage.bind(this);
                 }
@@ -34,6 +28,6 @@ export class MIDIService {
     }
     private handleMIDIMessage(event: any) {
         console.log(event);
-        this.key$.next({ input: 'MIDI', data: event.data });
+        this.key$.next(event.data);
     }
 }

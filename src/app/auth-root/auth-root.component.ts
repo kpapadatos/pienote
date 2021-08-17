@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { KeyboardService } from 'src/services/keyboard.service';
 import { MIDIService } from 'src/services/midi.service';
 import { StoreService } from 'src/services/store.service';
 
@@ -7,7 +8,7 @@ import { StoreService } from 'src/services/store.service';
   templateUrl: './auth-root.component.html',
   styleUrls: ['./auth-root.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [StoreService, MIDIService]
+  providers: [StoreService, MIDIService, KeyboardService]
 })
 export class AuthRootComponent {
 }
