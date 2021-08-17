@@ -28,7 +28,7 @@ export class MIDIService {
         }
     }
     private handleMIDIMessage(event: any) {
-        console.log(event);
+        console.log(event.data.join());
         this.key$.next(event.data);
     }
 }
