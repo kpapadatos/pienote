@@ -384,7 +384,8 @@ export class TrackComponent implements OnInit, OnDestroy {
       { id: 'kick', color: '#202d49', width: '3%' },
       { id: 'snare', color: 'red', width: '10%' },
       { id: 'hihat', color: 'yellow', width: '10%' },
-      { id: 'tom', color: 'blue', width: '10%' },
+      { id: 'hightom', color: 'orange', width: '10%' },
+      { id: 'lowtom', color: 'blue', width: '10%' },
       { id: 'crash', color: 'green', width: '10%' }
     ]) {
       const noteEl = document.createElement('div');

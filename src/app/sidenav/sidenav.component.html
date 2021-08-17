@@ -20,16 +20,22 @@
     <app-tracklist #tracklist [playlist]="playlist"></app-tracklist>
   </div>
 </div>
+<div class="mt-auto">
+  <div class="uppercase text-xs text-gray-500 p-2">midi inputs</div>
+  <ng-container *ngIf="(midi.inputs$ | async)?.length; else noMidi">
+    <div
+      *ngFor="let input of midi.inputs$ | async"
+      class="px-2 truncate cursor-pointer bg-gray-600"
+    >
+      <div class="truncate">{{ input.name }} ({{ input.manufacturer }})</div>
+    </div>
+  </ng-container>
+  <ng-template #noMidi
+    ><i class="text-gray-500 px-2">No devices</i></ng-template
+  >
+</div>
 <div
-  class="
-    mt-auto
-    p-2
-    cursor-pointer
-    flex flex-row
-    items-center
-    gap-2
-    bg-gray-800
-  "
+  class="p-2 cursor-pointer flex flex-row items-center gap-2 bg-gray-800"
   (click)="store.logout()"
 >
   <fa-icon [icon]="faSignOutAlt"></fa-icon>Logout
