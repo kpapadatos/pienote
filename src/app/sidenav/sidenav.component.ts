@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faKeyboard, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { MIDIService } from 'src/services/midi.service';
 import { StoreService } from 'src/services/store.service';
 
@@ -10,6 +10,7 @@ import { StoreService } from 'src/services/store.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidenavComponent implements OnInit {
+  public faKeyboard = faKeyboard;
   public faSignOutAlt = faSignOutAlt;
   constructor(public store: StoreService, public midi: MIDIService) { }
   public ngOnInit(): void {
