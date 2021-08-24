@@ -98,6 +98,7 @@ export interface IChart {
 
 export interface INote {
     noteId: string;
+    alt: boolean;
     beatIndex: number;
     divisions: number;
     lineIndex: number;

@@ -9,36 +9,42 @@ import { MIDIService } from './midi.service';
 export class KeymapService {
     private readonly keymapKey = 'keymap';
     public keymap = this.getKeymap();
-    public key$ = new Subject<{ noteIds: string[]; }>();
+    public key$ = new Subject<IInputKeysMessage>();
     constructor(
         private midi: MIDIService,
         private keyboard: KeyboardService
     ) {
         midi.key$.pipe(untilDestroyed(this)).subscribe(message => {
-            const noteIds = [] as string[];
+            const noteIds = [] as IInputKeysMessage['notes'];
 
             for (const [noteId, config] of Object.entries(this.keymap)) {
                 if (config.midi.find(o => this.isMIDIEqual(o, message))) {
-                    noteIds.push(noteId);
+                    noteIds.push({ noteId, isAlt: false });
+                }
+                if (config.alt?.midi.find(o => this.isMIDIEqual(o, message))) {
+                    noteIds.push({ noteId, isAlt: true });
                 }
             }
 
             if (noteIds.length) {
-                this.key$.next({ noteIds });
+                this.key$.next({ notes: noteIds });
             }
         });
         keyboard.key$.pipe(untilDestroyed(this)).subscribe(evt => {
             const event = evt as KeyboardEvent;
-            const noteIds = [] as string[];
+            const noteIds = [] as IInputKeysMessage['notes'];
 
             for (const [noteId, config] of Object.entries(this.keymap)) {
                 if (config.keyboard.find(o => o === event.code)) {
-                    noteIds.push(noteId);
+                    noteIds.push({ noteId, isAlt: false });
+                }
+                if (config.alt?.keyboard.find(o => o === event.code)) {
+                    noteIds.push({ noteId, isAlt: true });
                 }
             }
 
             if (noteIds.length) {
-                this.key$.next({ noteIds });
+                this.key$.next({ notes: noteIds });
             }
         });
     }
@@ -66,17 +72,35 @@ export class KeymapService {
             * 3rd byte: velocity
             */
             return {
-                kick: { midi: [[153, 36, 0]], keyboard: ['Space'] },
-                snare: { midi: [[153, 38, 0]], keyboard: ['KeyC'] },
-                hihat: { midi: [[153, 26, 0], [153, 42, 0]], keyboard: ['KeyM'] },
-                hightom: { midi: [[153, 48, 0]], keyboard: ['KeyJ'] },
-                lowtom: { midi: [[153, 41, 0]], keyboard: ['KeyK'] },
-                crash: { midi: [[153, 55, 0]], keyboard: ['KeyL'] },
+                kick: {
+                    midi: [[153, 36, 0]], keyboard: ['Space'],
+                    alt: { midi: [], keyboard: [] }
+                },
+                snare: {
+                    midi: [[153, 38, 0]], keyboard: ['KeyC'],
+                    alt: { midi: [], keyboard: [] }
+                },
+                hihat: {
+                    midi: [[153, 26, 0], [153, 42, 0]], keyboard: ['KeyM'], // Closed
+                    alt: { midi: [[153, 26, 0], [153, 42, 0]], keyboard: ['KeyM'] } // Opened
+                },
+                hightom: {
+                    midi: [[153, 48, 0]], keyboard: ['KeyJ'],
+                    alt: { midi: [], keyboard: [] }
+                },
+                lowtom: {
+                    midi: [[153, 41, 0]], keyboard: ['KeyK'],
+                    alt: { midi: [], keyboard: [] }
+                },
+                crash: {
+                    midi: [[153, 55, 0]], keyboard: ['KeyL'],
+                    alt: { midi: [[153, 55, 0]], keyboard: ['KeyL'] } // Lowest tom
+                },
             };
         }
     }
     private isMIDIEqual(a: MIDISignal, b: MIDISignal) {
-        return a[1] === b[1];
+        return a[0] === b[0] && a[1] === b[1];
     }
 }
 
@@ -84,7 +108,15 @@ export interface IKeymap {
     [noteId: string]: {
         keyboard: string[];
         midi: MIDISignal[];
+        alt?: IKeymap[string];
     };
 }
 
 export type MIDISignal = [number, number, number];
+
+export interface IInputKeysMessage {
+    notes: Array<{
+        noteId: string;
+        isAlt: boolean;
+    }>;
+}

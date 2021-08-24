@@ -91,8 +91,8 @@ export class TrackComponent implements OnInit, OnDestroy {
     }
   }
   public ngOnInit(): void {
-    this.keymap.key$.pipe(untilDestroyed(this)).subscribe(async ({ noteIds }) => {
-      console.log(noteIds);
+    this.keymap.key$.pipe(untilDestroyed(this)).subscribe(async ({ notes }) => {
+      console.log(notes);
 
       if (this.player.isPlaying$.getValue()) {
         const { position } = await this.player.getCurrentState();
@@ -103,8 +103,10 @@ export class TrackComponent implements OnInit, OnDestroy {
         console.log(notesInThreshold);
 
         // Find match starting from oldest
-        const validNotes = new Set(noteIds);
-        const match = notesInThreshold.sort((a, b) => a.noteStartMs - b.noteStartMs).find(o => validNotes.has(o.noteId));
+        const match = notesInThreshold.sort((a, b) => a.noteStartMs - b.noteStartMs).find(o => notes.find(n =>
+          n.noteId === o.noteId &&
+          Boolean(n.isAlt) === Boolean(o.alt) // @todo Remove Boolean when alt is required
+        ));
 
         if (match) {
           // @todo Spend it
